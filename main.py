@@ -23,4 +23,4 @@ def setup_driver_capabilities(request):
 
 if __name__ == "__main__":
     # Run pytest to discover and execute test cases
-    pytest.main(["-v", "test_positive.py", "test_negative.py"])
+    pytest.main(["-v", "test_positive_flows.py", "test_negative_flows.py"])
