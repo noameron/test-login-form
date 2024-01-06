@@ -1,4 +1,4 @@
-# Gmail App Login Automation
+# Gmail App Login Form Quality
 
 This project automates the testing of the Gmail app's login form using Appium, pytest, and an Android emulator from Android Studio. It is designed to validate both positive and negative authentication flows.
 
@@ -19,7 +19,7 @@ Follow these steps to set up your environment for running the automated tests:
 1. Open Android Studio and navigate to the **AVD Manager**.
 2. Click on **Create Virtual Device**.
 3. Select a device definition and click **Next**.
-4. Choose a system image with Android version 11.0 (R) and download it if necessary.
+4. Choose a system image with Android version **11.0 (R)** and download it if necessary.
 5. Complete the AVD configuration and click **Finish**.
 
 ### Install Dependencies
