@@ -1,189 +1,109 @@
 import pytest
-from appium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
+from main import setup_driver_capabilities
+from appium_actions.gmail_actions import click_next, gmail_login_screen_actions
 
 
-@pytest.fixture(scope="function")
-def setup_driver_capabilities(request):
-    options = webdriver.webdriver.AppiumOptions()
-    options.set_capability('platformName', 'Android')
-    options.set_capability('platformVersion', '11.0')
-    options.set_capability('deviceName', 'emulator-5556')
-    options.set_capability('appPackage', 'com.google.android.gm')
-    options.set_capability('appActivity', '.ConversationListActivityGmail')
-    options.set_capability('noReset', True)
+@pytest.mark.usefixtures("setup_driver_capabilities")
+class TestNegativeFlows:
 
-    driver = webdriver.Remote('http://0.0.0.0:4723/wd/hub', options=options)
-    yield driver
+    @staticmethod
+    def verify_appium_connection(driver):
+        """
+        Test case to check that Appium server is running and emulator is connected
+        :param driver: Appium driver
+        :return:
+        """
+        assert driver.session_id is not None, "Failed to create a session with emulator"
 
-    def teardown():
-        driver.execute_script("mobile: shell", {
-            "command": "am",
-            "args": ["kill", "com.google.android.gm"]
-        })
-        driver.quit()
+    @staticmethod
+    def validate_error_message(driver, expected_error_message):
+        """
+        Validate that the error message matches the expected message
+        :param driver: Appium driver
+        :param expected_error_message: Expected error message
+        """
+        wait = WebDriverWait(driver, 20)
+        error_message_element = wait.until(EC.presence_of_element_located((By.XPATH,
+                                                                           f"//android.view.View[@text='{expected_error_message}']")))
+        error_message_text = error_message_element.text
+        assert expected_error_message == error_message_text, f"Error message mismatch: {error_message_text}"
 
-    request.addfinalizer(teardown)
-    return driver
+    def test_bad_login_name_with_refresh(self, setup_driver_capabilities):
+        """
+        Test case to check that error message is displayed when user enters bad login name
+        :param setup_driver_capabilities:
+        :return:
+        """
+        driver = setup_driver_capabilities
+        self.verify_appium_connection(driver)
+        wait = WebDriverWait(driver, 20)
+        expected_error_message = "Couldn’t find your Google Account"
 
-def test_appium_connection(setup_driver_capabilities):
-    """
-    Test case to check that Appium server is running and emulator is connected
-    :param setup_driver_capabilities:
-    :return:
-    """
-    driver = setup_driver_capabilities
-    assert driver.session_id is not None, "Failed to create a session with emulator"
+        gmail_login_screen_actions(driver)
 
+        wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("bad_email")
 
-def test_gmail_app_opening(setup_driver_capabilities):
-    """
-    Test case to check that Gmail App is opened
-    :param setup_driver_capabilities:
-    :return:
-    """
-    driver = setup_driver_capabilities
-    wait = WebDriverWait(driver, 20)
+        click_next(driver)
 
-    elem_got_it_screen = wait.until(EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/welcome_tour_got_it")))
-    elem_got_it_screen.click()
+        self.validate_error_message(driver, expected_error_message)
 
-    elem_setup_email = wait.until(EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/setup_addresses_add_another")))
-    elem_setup_email.click()
+    def test_long_email_address(self, setup_driver_capabilities):
+        """
+        Test case to check that error message is displayed when user enters long email address
+        :param setup_driver_capabilities:
+        :return:
+        """
+        driver = setup_driver_capabilities
+        self.verify_appium_connection(driver)
+        wait = WebDriverWait(driver, 20)
+        expected_error_message = "Enter a valid email or phone number"
 
-    elem_gmail = wait.until(EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/account_setup_label")))
-    elem_gmail.click()
+        gmail_login_screen_actions(driver)
 
-    elem_gmail_login_page = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText")))
-    assert elem_gmail_login_page is not None, "Failed to open Gmail App"
+        wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("a" * 300)
 
+        click_next(driver)
 
-def test_bad_login_name_with_refresh(setup_driver_capabilities):
-    """
-    Test case to check that error message is displayed when user enters bad login name
-    :param setup_driver_capabilities:
-    :return:
-    """
-    driver = setup_driver_capabilities
-    wait = WebDriverWait(driver, 20)
-    expected_error_message = "Couldn’t find your Google Account"
+        self.validate_error_message(driver, expected_error_message)
 
-    elem_got_it_screen = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/welcome_tour_got_it")))
-    elem_got_it_screen.click()
+    def test_empty_email_address(self, setup_driver_capabilities):
+        """
+        Test case to check that error message is displayed when user enters empty email address
+        :param setup_driver_capabilities:
+        :return:
+        """
 
-    elem_setup_email = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/setup_addresses_add_another")))
-    elem_setup_email.click()
+        driver = setup_driver_capabilities
+        self.verify_appium_connection(driver)
+        wait = WebDriverWait(driver, 20)
+        expected_error_message = "Enter an email or phone number"
 
-    elem_gmail = wait.until(EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/account_setup_label")))
-    elem_gmail.click()
+        gmail_login_screen_actions(driver)
 
-    wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("bad_email")
+        wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("")
 
-    driver.find_element(By.XPATH, "//android.widget.Button[@text='NEXT']").click()
+        click_next(driver)
 
-    error_message_element = wait.until(EC.presence_of_element_located((By.XPATH,
-                                                                       "//android.view.View[@text='Couldn’t find your Google Account']")))
-    error_message_text = error_message_element.text
+        self.validate_error_message(driver, expected_error_message)
 
-    assert expected_error_message == error_message_text, "Bad email error message is not displayed"
+    def test_special_characters_bad_email(self, setup_driver_capabilities):
+        """
+        Test case to check that error message is displayed when user enters special characters in email address
+        :param setup_driver_capabilities:
+        :return:
+        """
+        driver = setup_driver_capabilities
+        self.verify_appium_connection(driver)
+        wait = WebDriverWait(driver, 20)
+        expected_error_message = "Enter a valid email or phone number"
 
+        gmail_login_screen_actions(driver)
 
-def test_long_email_address(setup_driver_capabilities):
-    """
-    Test case to check that error message is displayed when user enters long email address
-    :param setup_driver_capabilities:
-    :return:
-    """
-    driver = setup_driver_capabilities
-    wait = WebDriverWait(driver, 20)
-    expected_error_message = "Enter a valid email or phone number"
+        wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("bad_email@#$%^&*()")
 
-    elem_got_it_screen = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/welcome_tour_got_it")))
-    elem_got_it_screen.click()
+        click_next(driver)
 
-    elem_setup_email = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/setup_addresses_add_another")))
-    elem_setup_email.click()
-
-    elem_gmail = wait.until(EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/account_setup_label")))
-    elem_gmail.click()
-
-    wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("a" * 300)
-
-    driver.find_element(By.XPATH, "//android.widget.Button[@text='NEXT']").click()
-
-    error_message_element = wait.until(EC.presence_of_element_located((By.XPATH,
-                                                                       "//android.view.View[@text='Enter a valid email or phone number']")))
-    error_message_text = error_message_element.text
-
-    assert expected_error_message == error_message_text, "Invalid error message is not displayed"
-
-
-def test_empty_email_address(setup_driver_capabilities):
-    """
-    Test case to check that error message is displayed when user enters empty email address
-    :param setup_driver_capabilities:
-    :return:
-    """
-
-    driver = setup_driver_capabilities
-    wait = WebDriverWait(driver, 20)
-    expected_error_message = "Enter an email or phone number"
-
-    elem_got_it_screen = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/welcome_tour_got_it")))
-    elem_got_it_screen.click()
-
-    elem_setup_email = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/setup_addresses_add_another")))
-    elem_setup_email.click()
-
-    elem_gmail = wait.until(EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/account_setup_label")))
-    elem_gmail.click()
-
-    wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("")
-
-    driver.find_element(By.XPATH, "//android.widget.Button[@text='NEXT']").click()
-
-    error_message_element = wait.until(EC.presence_of_element_located((By.XPATH,
-                                                                       "//android.view.View[@text='Enter an email or phone number']")))
-    error_message_text = error_message_element.text
-
-    assert expected_error_message == error_message_text, "Empty email error message is not displayed"
-
-
-def test_special_characters_bad_email(setup_driver_capabilities):
-    """
-    Test case to check that error message is displayed when user enters special characters in email address
-    :param setup_driver_capabilities:
-    :return:
-    """
-    driver = setup_driver_capabilities
-    wait = WebDriverWait(driver, 20)
-    expected_error_message = "Enter a valid email or phone number"
-
-    elem_got_it_screen = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/welcome_tour_got_it")))
-    elem_got_it_screen.click()
-
-    elem_setup_email = wait.until(
-        EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/setup_addresses_add_another")))
-    elem_setup_email.click()
-
-    elem_gmail = wait.until(EC.visibility_of_element_located((By.ID, "com.google.android.gm:id/account_setup_label")))
-    elem_gmail.click()
-
-    wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "android.widget.EditText"))).send_keys("bad_email@#$%^&*()")
-
-    driver.find_element(By.XPATH, "//android.widget.Button[@text='NEXT']").click()
-
-    error_message_element = wait.until(EC.presence_of_element_located((By.XPATH,
-                                                                       "//android.view.View[@text='Enter a valid email or phone number']")))
-    error_message_text = error_message_element.text
-
-    assert expected_error_message == error_message_text, "Bad email error message is not displayed"
+        self.validate_error_message(driver, expected_error_message)
