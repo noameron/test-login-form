@@ -2,6 +2,7 @@ import pytest
 from appium_config import get_appium_capabilities
 from appium import webdriver
 
+
 @pytest.fixture(scope="function")
 def setup_driver_capabilities(request):
     options = webdriver.webdriver.AppiumOptions()
