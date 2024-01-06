@@ -3,7 +3,6 @@ from appium.webdriver import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
-from main import setup_driver_capabilities
 from appium_actions.gmail_actions import click_next, gmail_login_screen_actions, fill_email_address_box, fill_password_box
 from tests.gmail_app_enums import GmailCreds, ErrorMessages
 

@@ -3,7 +3,6 @@ from appium.webdriver import webdriver
 from selenium.webdriver.common.by import By
 
 from appium_actions.gmail_actions import click_next, gmail_login_screen_actions, fill_email_address_box
-from main import setup_driver_capabilities
 
 
 @pytest.mark.usefixtures("setup_driver_capabilities")
