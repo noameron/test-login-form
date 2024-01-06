@@ -1,6 +1,17 @@
 import pytest
-from appium_config import get_appium_capabilities
 from appium import webdriver
+
+
+def get_appium_capabilities():
+    capabilities = {
+        'platformName': 'Android',
+        'platformVersion': '11.0',
+        'deviceName': 'emulator-5554',
+        'appPackage': 'com.google.android.gm',
+        'appActivity': '.ConversationListActivityGmail',
+        'noReset': True
+    }
+    return capabilities
 
 
 @pytest.fixture(scope="function")
@@ -20,7 +31,3 @@ def setup_driver_capabilities(request):
     request.addfinalizer(teardown)
     return driver
 
-
-if __name__ == "__main__":
-    # Run pytest to discover and execute test cases
-    pytest.main(["-v", "test_positive_flows.py", "test_negative_flows.py"])
